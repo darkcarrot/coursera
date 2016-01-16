@@ -2,6 +2,7 @@ import QSTK.qstkutil.qsdateutil as du
 import QSTK.qstkutil.DataAccess as da
 import datetime as dt
 import numpy as np
+import pandas as pd
 
 PORTFOLIOS = ((2011, 1, 1), (2011, 12, 31), ('AAPL', 'GOOG', 'IBM', 'MSFT')), \
              ((2010, 1, 1), (2010, 12, 31), ('BRCM', 'ADBE', 'AMD', 'ADI')), \
@@ -19,18 +20,19 @@ def optimise(symbols, dt_start, dt_end, ):
                     for x4 in alloc_range
                     if x1 + x2 + x3 + x4 == 1]
 
-    ls_performance = [(com, __simulate(symbols, dt_start, dt_end, com)) for com in combinations]
-    performance = {tuple(key): value for (key, value) in ls_performance}
-    best_alloc = max(performance, key=lambda x: performance.get(x)[2])
-    best_result = performance[best_alloc]
+    ls_performance = [__simulate(symbols, dt_start, dt_end, com) for com in combinations]
+    df = pd.DataFrame(ls_performance, columns=["alloc", "vol", "avg_daily_ret", "sharpe_ratio", "cum_ret"])
+    df.sort("sharpe_ratio", ascending=False, inplace=True)
+    df.reset_index(inplace=True)
+    best_result = df.ix[0]
 
     print "Symbols:", symbols
     print "Start/End Date:", dt_start.strftime("%Y-%m-%d"), dt_end.strftime("%Y-%m-%d")
-    print "Optimal Allocation:", best_alloc
-    print "Sharpe Ratio:", best_result[2]
-    # print "Volatility:", best_result[0]
-    # print "Average Daily Return:", best_result[1]
-    # print "Cumulative Return:", best_result[3]
+    print "Optimal Allocation:", best_result.alloc
+    print "Sharpe Ratio:", best_result.sharpe_ratio
+    # print "Volatility:", best_result.vol
+    # print "Average Daily Return:", best_result.avg_daily_ret
+    # print "Cumulative Return:", best_result.cum_ret
 
 
 def __simulate(symbols, dt_start, dt_end, alloc):
@@ -45,7 +47,7 @@ def __simulate(symbols, dt_start, dt_end, alloc):
     avg_daily_ret = daily_rets.mean()
     sharp_ratio = k * avg_daily_ret / vol
 
-    return vol, avg_daily_ret, sharp_ratio, daily_vals[-1]
+    return alloc, vol, avg_daily_ret, sharp_ratio, daily_vals[-1]
 
 
 def get_data(symbols, dt_start, dt_end, ):
