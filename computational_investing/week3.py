@@ -22,7 +22,7 @@ def optimise(symbols, dt_start, dt_end, ):
 
     ls_performance = [__simulate(symbols, dt_start, dt_end, com) for com in combinations]
     df = pd.DataFrame(ls_performance, columns=["alloc", "vol", "avg_daily_ret", "sharpe_ratio", "cum_ret"])
-    df.sort("sharpe_ratio", ascending=False, inplace=True)
+    df.sort_values(by="sharpe_ratio", ascending=False, inplace=True)
     df.reset_index(inplace=True)
     best_result = df.ix[0]
 
